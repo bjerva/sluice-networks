@@ -119,6 +119,11 @@ class SluiceNetwork(object):
         self.embeds_file = embeds_file
         self.char_rnn = None  # RNN for character input
 
+        # Language embedding specific
+        self.lang2id = {}
+        self.lembeds = None
+        self.lang_dim = 32
+
     def save(self):
         """Save model. DyNet only saves parameters. Save rest separately."""
         self.model.save(self.model_file)
@@ -144,14 +149,15 @@ class SluiceNetwork(object):
                     'layer_stitch_init_scheme': self.layer_stitch_init_scheme}
         pickle.dump(myparams, open(self.params_file, "wb"))
 
-    def set_indices(self, w2i, c2i, task2t2i):
+    def set_indices(self, w2i, c2i, task2t2i, l2i):
         """Sets indices of word, character, and task mappings."""
         for task_id in task2t2i:
             self.task2tag2idx[task_id] = task2t2i[task_id]
         self.word2id = w2i
         self.char2id = c2i
+        self.lang2id = l2i
 
-    def build_computation_graph(self, num_words, num_chars):
+    def build_computation_graph(self, num_words, num_chars, num_langs):
         """Builds the computation graph."""
         # initialize the word embeddings
         if self.embeds_file:
@@ -175,6 +181,8 @@ class SluiceNetwork(object):
             wembeds = self.model.add_lookup_parameters((num_words, self.in_dim))
             cembeds = self.model.add_lookup_parameters((num_chars, self.c_in_dim))
 
+        lembeds = self.model.add_lookup_parameters((num_langs, self.lang_dim))
+
         layers = []  # inner layers
         output_layers_dict = {}  # from task_name to actual softmax predictor
         task_expected_at = {}  # maps task_name => output_layer id
@@ -195,7 +203,7 @@ class SluiceNetwork(object):
         cross_stitch_layers = []
         for layer_num in range(self.h_layers):
             print(">>> %d layer_num" % layer_num, flush=True)
-            input_dim = self.in_dim + self.c_in_dim * 2 if layer_num == 0 \
+            input_dim = self.lang_dim + self.in_dim + self.c_in_dim * 2 if layer_num == 0 \
                 else self.h_dim
             task_layers = []
             # get one layer per task for cross-stitching or just one layer
@@ -246,7 +254,7 @@ class SluiceNetwork(object):
         predictors['layer_stitch'] = layer_stitch_layers
         predictors["output_layers_dict"] = output_layers_dict
         predictors["task_expected_at"] = task_expected_at
-        return predictors, char_rnn, wembeds, cembeds
+        return predictors, char_rnn, wembeds, cembeds, lembeds
 
     def fit(self, train_domain, num_epochs, patience, optimizer, train_dir,
             dev_dir):
@@ -260,24 +268,25 @@ class SluiceNetwork(object):
         :param dev_dir: the directory containing the development files
         """
         print("Reading training data from %s..." % train_dir, flush=True)
-        train_X, train_Y, _, _, word2id, char2id, task2t2i = get_data(
-            [train_domain], self.task_names, data_dir=train_dir, train=True)
+        train_X, train_Y, _, _, word2id, char2id, task2t2i, lang2id, train_L = get_data(
+            [train_domain], self.task_names, data_dir=train_dir, train=True, verbose=True)
 
         # get the development data of the same domain
-        dev_X, dev_Y, org_X, org_Y, _, _, _ = get_data(
+        dev_X, dev_Y, org_X, org_Y, _, _, _, _, _ = get_data(
             [train_domain], self.task_names, word2id, char2id, task2t2i,
-            data_dir=dev_dir, train=False)
+            data_dir=dev_dir, train=False, verbose=True)
         print('Length of training data:', len(train_X), flush=True)
         print('Length of validation data:', len(dev_X), flush=True)
 
         # store mappings of words and tags to indices
-        self.set_indices(word2id, char2id, task2t2i)
+        self.set_indices(word2id, char2id, task2t2i, lang2id)
         num_words = len(self.word2id)
         num_chars = len(self.char2id)
+        num_langs = len(self.lang2id)
 
         print('Building the computation graph...', flush=True)
-        self.predictors, self.char_rnn, self.wembeds, self.cembeds = \
-            self.build_computation_graph(num_words, num_chars)
+        self.predictors, self.char_rnn, self.wembeds, self.cembeds, self.lembeds = \
+            self.build_computation_graph(num_words, num_chars, num_langs)
 
         if optimizer == SGD:
             trainer = dynet.SimpleSGDTrainer(self.model)
@@ -286,7 +295,7 @@ class SluiceNetwork(object):
         else:
             raise ValueError('%s is not a valid optimizer.' % optimizer)
 
-        train_data = list(zip(train_X, train_Y))
+        train_data = list(zip(train_X, train_Y, train_L))
 
         num_iterations = 0
         num_epochs_no_improvement = 0
@@ -310,10 +319,10 @@ class SluiceNetwork(object):
             random.shuffle(train_data)
 
             # for every instance, we optimize the loss of the corresponding task
-            for (word_indices, char_indices), task2label_id_seq in train_data:
+            for (word_indices, char_indices), task2label_id_seq, langid in train_data:
                 # get the concatenated word and char-based features for every
                 # word in the sequence
-                features = self.get_word_char_features(word_indices, char_indices)
+                features = self.get_word_char_features(word_indices, char_indices, langid)
                 for task, y in task2label_id_seq.items():
                     if task in [POS, CHUNK, NER, SRL]:
                         output, penalty = self.predict(features, task, train=True)
@@ -586,7 +595,7 @@ class SluiceNetwork(object):
         return task2stats[self.main_task]['correct'] / task2stats[
             self.main_task]['total']
 
-    def get_word_char_features(self, word_indices, char_indices):
+    def get_word_char_features(self, word_indices, char_indices, lang_id):
         """
         Produce word and character features that can be used as input for the
         predictions.
@@ -609,9 +618,10 @@ class SluiceNetwork(object):
             char_emb.append(last_state)
             rev_char_emb.append(rev_last_state)
 
+        lfeatures = [self.lembeds[lang_id] for _ in word_indices]
         wfeatures = [self.wembeds[w] for w in word_indices]
-        features = [dynet.concatenate([w, c, rev_c]) for w, c, rev_c in
-                    zip(wfeatures, char_emb, reversed(rev_char_emb))]
+        features = [dynet.concatenate([w, c, rev_c, l]) for w, c, rev_c, l in
+                    zip(wfeatures, char_emb, reversed(rev_char_emb), lfeatures)]
         return features
 
 

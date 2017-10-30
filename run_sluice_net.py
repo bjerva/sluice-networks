@@ -57,7 +57,7 @@ def main(args):
     assert args.num_subspaces > 1 or args.constraint_weight == 0,\
         'Error: More than 1 subspace necessary for subspace constraint.'
     assert args.constraint_weight != 0 and args.constrain_matrices or not\
-        (args.constraint_weight != 0 or args.constrain_matrices),\
+        (args.constraint_weight != 0 and args.constrain_matrices),\
         ('Error: When subspace constraint is specified, indices of matrices '
          'to be constrained need to be provided.')
     assert args.cross_stitch or args.constraint_weight == 0,\

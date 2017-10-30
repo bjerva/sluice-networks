@@ -18,7 +18,8 @@ NER = 'ner'  # named entity recognition
 TASK_NAMES = [POS, CHUNK, SRL, NER]
 
 # domains
-DOMAINS = ['bc', 'bn', 'mz', 'nw', 'wb', 'tc', 'pt']
+#DOMAINS = ['bc', 'bn', 'mz', 'nw', 'wb', 'tc', 'pt']
+DOMAINS = ['UD_English', 'UD_German', 'UD_Finnish']
 
 # model files
 MODEL_FILE = 'sluice_net.model'

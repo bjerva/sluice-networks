@@ -86,9 +86,11 @@ def read_conll_file(file_path, tasks=None, verbose=False):
                 conll_entries = []
             else:
                 # legend here: http://cemantix.org/data/ontonotes.html
-                doc_id, part_num, word_id, word_form, postag, parse_bit, lemma,\
-                    frameset_id, word_sense, speaker, ner_tag, *rest = \
-                    line.strip().split()
+                #doc_id, part_num,
+                #lemma,\
+                    #frameset_id, word_sense, speaker, ner_tag,
+                word_id, word_form, lemma, postag, ner_tag, \
+                    *rest = line.strip().split()
                 srl_tags, srl_bio_tag = [], None
 
                 # we only use the verb identification tags (not the ARG tags)
@@ -107,7 +109,7 @@ def read_conll_file(file_path, tasks=None, verbose=False):
                 ner_bio_tag, prev_ner_tag_type, ner_within_tag = tag2BIO_tag(
                     ner_tag, prev_ner_tag_type, ner_within_tag)
                 conll_entries.append(
-                    ConllEntry(int(word_id), word_form, tasks, pos=postag,
+                    ConllEntry(float(word_id), word_form, tasks, pos=postag,
                                ner_tag=ner_bio_tag, srl_tag=srl_bio_tag))
         if len(conll_entries) > 1:
             yield conll_entries
@@ -183,6 +185,9 @@ def get_data(domains, task_names, word2id=None, char2id=None,
     Y = []
     org_X = []
     org_Y = []
+    L = []
+
+    lang2id = {}
 
     # for training, we initialize all mappings; for testing, we require mappings
     if train:
@@ -215,19 +220,21 @@ def get_data(domains, task_names, word2id=None, char2id=None,
         assert WORD_END in char2id
 
     for domain in domains:
+        lang2id[domain] = len(lang2id)
         num_sentences = 0
         num_tokens = 0
 
         file_reader = iter(())
-        domain_path = os.path.join(data_dir, 'data', 'english',
-                                   'annotations', domain)
+        domain_path = os.path.join(data_dir, #'data', 'english',
+                                   #'annotations',
+                                   domain)
         assert os.path.exists(domain_path), ('Domain path %s does not exist.'
                                              % domain_path)
         # read files in the domain path and add the file reader to the generator
         if POS in task_names or SRL in task_names or NER in task_names:
             # POS tagging, SRL, and NER use the same files
             for file_path in itertools.chain.from_iterable(
-                    glob(os.path.join(x[0], '*.gold_conll'))
+                    glob(os.path.join(x[0], '*.conllu'))# '*.gold_conll'))
                     for x in os.walk(domain_path)):
                 file_reader = itertools.chain(
                     file_reader, read_conll_file(file_path, verbose=verbose))
@@ -248,6 +255,8 @@ def get_data(domains, task_names, word2id=None, char2id=None,
             # keep track of the label indices and labels for each task
             sentence_task2label_indices = {}
             sentence_task2labels = {}
+
+            sentence_language = lang2id[domain]
 
             # keep track of the original word forms
             org_X.append([conll_entry.norm for conll_entry in conll_entries])
@@ -313,6 +322,7 @@ def get_data(domains, task_names, word2id=None, char2id=None,
                 'Error: No label/task available for entry.'
             X.append((sentence_word_indices, sentence_char_indices))
             Y.append(sentence_task2label_indices)
+            L.append(sentence_language)
             org_Y.append(sentence_task2labels)
 
         assert num_sentences != 0 and num_tokens != 0, ('No data read for '
@@ -326,7 +336,7 @@ def get_data(domains, task_names, word2id=None, char2id=None,
         print('Task %s. Labels: %s' % (task, [l for l in label2id.keys()]))
 
     assert len(X) == len(Y)
-    return X, Y, org_X, org_Y, word2id, char2id, task2label2id
+    return X, Y, org_X, org_Y, word2id, char2id, task2label2id, lang2id, L
 
 
 def log_score(log_file, src_domain, trg_domain, accuracy, task_names,
