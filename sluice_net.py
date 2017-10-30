@@ -269,11 +269,11 @@ class SluiceNetwork(object):
         """
         print("Reading training data from %s..." % train_dir, flush=True)
         train_X, train_Y, _, _, word2id, char2id, task2t2i, lang2id, train_L = get_data(
-            [train_domain], self.task_names, data_dir=train_dir, train=True, verbose=True)
+            train_domain, self.task_names, data_dir=train_dir, train=True, verbose=True)
 
         # get the development data of the same domain
         dev_X, dev_Y, org_X, org_Y, _, _, _, _, _ = get_data(
-            [train_domain], self.task_names, word2id, char2id, task2t2i,
+            train_domain, self.task_names, word2id, char2id, task2t2i,
             data_dir=dev_dir, train=False, verbose=True)
         print('Length of training data:', len(train_X), flush=True)
         print('Length of validation data:', len(dev_X), flush=True)

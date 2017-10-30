@@ -148,7 +148,7 @@ if __name__ == '__main__':
     parser.add_argument('--dynet-mem', type=int, help='memory for DyNet')
 
     # domains, tasks, and paths
-    parser.add_argument('--train', required=True, choices=DOMAINS,
+    parser.add_argument('--train', nargs='*', required=True, choices=DOMAINS,
                         help='the domain for training the model')
     parser.add_argument('--test', nargs='*', choices=DOMAINS,
                         help='the domains used for testing the model')
