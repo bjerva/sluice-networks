@@ -129,9 +129,11 @@ class SluiceNetwork(object):
         self.model.save(self.model_file)
         myparams = {"num_words": len(self.word2id),
                     "num_chars": len(self.char2id),
+                    "num_langs": len(self.lang2id),
                     "task_names": self.task_names,
                     "w2i": self.word2id,
                     "c2i": self.char2id,
+                    "l2i": self.lang2id,
                     "task2tag2idx": self.task2tag2idx,
                     "activation": self.activation,
                     "in_dim": self.in_dim,
@@ -304,6 +306,7 @@ class SluiceNetwork(object):
         print('Training model with %s for %d epochs and patience of %d.'
               % (optimizer, num_epochs, patience))
         for epoch in range(num_epochs):
+            import pdb; pdb.set_trace()
             print('', flush=True)
             bar = Bar('Training epoch %d/%d...' % (epoch+1, num_epochs),
                       max=len(train_data), flush=True)
