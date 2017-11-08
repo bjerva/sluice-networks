@@ -341,7 +341,7 @@ class SluiceNetwork(object):
                     lv = loss.value()
                     # sum the loss and the subspace constraint penalty
                     combined_loss = loss + dynet.parameter(
-                        self.constraint_weight_param, update=False) * penalty
+                        self.constraint_weight_param) * penalty
                     total_loss += lv
                     total_penalty += penalty.value()
                     total_predicted += len(output)
@@ -417,7 +417,7 @@ class SluiceNetwork(object):
         # layer for the layer connection units
         layer_forward_sequences = []
         layer_backward_sequences = []
-        penalty = dynet.parameter(self.subspace_penalty, update=False)
+        penalty = dynet.parameter(self.subspace_penalty)#, update=False)
         for i in range(0, num_layers):
             forward_sequences = []
             backward_sequences = []
@@ -565,7 +565,7 @@ class SluiceNetwork(object):
             print('Note: Without cross-stitching, we only use the first '
                   'layer-stitch units due to hard parameter-sharing.')
 
-        task2stats = {task: {'correct': 0, 'total': 0} for task
+        task2stats = {task: {'correct': 0.0, 'total': 0.0} for task
                       in self.task_names}
         for i, ((word_indices, word_char_indices), task2label_id_seq)\
                 in enumerate(zip(test_X, test_Y)):
