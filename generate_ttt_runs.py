@@ -32,6 +32,6 @@ languages = 'UD_Finnish UD_Estonian UD_Hungarian UD_NorthSami'.split()
 for l1 in languages:
     for l2 in languages:
         with open('ttt_runs/{0}_{1}.sh'.format(l1, l2), 'w') as out_f:
-            out_f.write(base_slurm.format(l1[3:7]+'_'+l2[3:7]))
+            out_f.write(base_slurm.format(l1[3:6]+'_'+l2[3:6]))
             out_f.write(base_python.format(l1, l2))
             out_f.write(log_dir.format(l1, l2))
