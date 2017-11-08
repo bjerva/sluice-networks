@@ -357,11 +357,10 @@ class SluiceNetwork(object):
 
             print("\nEpoch %d. Total loss: %.3f. Total penalty: %.3f. Losses: "
                   % (epoch, total_loss / total_predicted,
-                     total_penalty / total_predicted), end='')#, flush=True)
+                     total_penalty / total_predicted))#, end='')#, flush=True)
             for task in task2total_loss.keys():
                 print('%s: %.3f. ' % (task, task2total_loss[task] /
-                                      task2total_predicted[task]),
-                      end='')#, flush=True)
+                                      task2total_predicted[task])) # end='')#, flush=True)
             print('')#, flush=True)
 
             # evaluate after every epoch
@@ -550,16 +549,14 @@ class SluiceNetwork(object):
             for layer_num in range(self.h_layers):
                 alphas = dynet.parameter(
                     self.predictors['cross_stitch'][layer_num].alphas).value()
-                print('Cross-stitch unit values at layer %d.' % layer_num,
-                      end=' ')#, flush=True)
+                print('Cross-stitch unit values at layer %d.' % layer_num)#end=' ')#, flush=True)
                 if self.num_subspaces > 1:
                     print(np.array(alphas).flatten())
                 else:
                     for i, task_i in enumerate(self.task_names):
                         for j, task_j in enumerate(self.task_names):
                             print('%s-%s: %3f.' % (task_i, task_j,
-                                                   alphas[i][j]),
-                                  end=' ')#, flush=True)
+                                                   alphas[i][j]))#,end=' ')#, flush=True)
                 print('')
         if self.layer_connect == STITCH:
             for task_id, task_name in enumerate(self.task_names):
