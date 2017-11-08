@@ -8,7 +8,8 @@ import os
 import numpy as np
 import pickle
 import dynet
-from progress.bar import Bar
+if __debug__:
+    from progress.bar import Bar
 
 from predictors import SequencePredictor, Layer, RNNSequencePredictor, \
     BiRNNSequencePredictor, CrossStitchLayer, LayerStitchLayer
@@ -353,7 +354,8 @@ class SluiceNetwork(object):
                     # back-propagate through the combined loss
                     combined_loss.backward()
                     trainer.update()
-                bar.next()
+                if __debug__:
+                    bar.next()
                 num_iterations += 1
 
             print("\nEpoch %d. Total loss: %.3f. Total penalty: %.3f. Losses: "
