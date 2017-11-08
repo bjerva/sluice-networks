@@ -38,6 +38,7 @@ for l1 in languages:
 
 for l1 in languages:
     for l2 in languages:
+        if l1 == l2: continue
         for l3 in languages:
             with open('ttt_runs/{0}_{1}_{2}.sh'.format(l1, l2, l3), 'w') as out_f:
                 out_f.write(base_slurm.format(l1[3:6]+'_'+l3[3:6]))
@@ -47,7 +48,9 @@ for l1 in languages:
 
 for l1 in languages:
     for l2 in languages:
+        if l1 == l2: continue
         for l3 in languages:
+            if l1 == l3 or l2 == l3: continue
             for l4 in languages:
                 with open('ttt_runs/{0}_{1}_{2}_{3}.sh'.format(l1, l2, l3, l4), 'w') as out_f:
                     out_f.write(base_slurm.format(l1[3:6]+'_'+l4[3:6]))
