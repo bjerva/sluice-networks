@@ -42,7 +42,7 @@ def load(params_file, model_file, args):
     model.predictors, model.char_rnn, model.wembeds, model.cembeds = \
         model.build_computation_graph(params['num_words'], params['num_chars'])
     model.model.load(model_file)
-    print('Model loaded from %s...' % model_file, flush=True)
+    print('Model loaded from %s...' % model_file)#, flush=True)
     return model
 
 
@@ -83,7 +83,7 @@ class SluiceNetwork(object):
         self.char2id = {}  # char to index mapping
         self.task_names = task_names
         self.main_task = self.task_names[0]
-        print('Using the first task as main task:', self.main_task, flush=True)
+        print('Using the first task as main task:', self.main_task)#, flush=True)
         self.model_dir = model_dir
         self.model_file = os.path.join(model_dir, MODEL_FILE)
         self.params_file = os.path.join(model_dir, PARAMS_FILE)
@@ -163,7 +163,7 @@ class SluiceNetwork(object):
         """Builds the computation graph."""
         # initialize the word embeddings
         if self.embeds_file:
-            print('Loading embeddings', flush=True)
+            print('Loading embeddings')#, flush=True)
             embeddings, emb_dim = load_embeddings_file(self.embeds_file,
                                                        lower=self.lower)
             assert (emb_dim == self.in_dim)
@@ -178,7 +178,7 @@ class SluiceNetwork(object):
                 if word not in self.word2id:
                     self.word2id[word] = len(self.word2id.keys())
                 wembeds.init_row(self.word2id[word], embeddings[word])
-            print('Initialized %d word embeddings...' % i, flush=True)
+            print('Initialized %d word embeddings...' % i)#, flush=True)
         else:
             wembeds = self.model.add_lookup_parameters((num_words, self.in_dim))
             cembeds = self.model.add_lookup_parameters((num_chars, self.c_in_dim))
@@ -201,15 +201,15 @@ class SluiceNetwork(object):
                  'Increase h_layers.')
             task_expected_at[task_name] = output_layer_id
 
-        print('Task expected at', task_expected_at, flush=True)
-        print('h_layers:', self.h_layers, flush=True)
+        print('Task expected at', task_expected_at)#, flush=True)
+        print('h_layers:', self.h_layers)#, flush=True)
 
         # we have a separate layer for each task for cross-stitching;
         # otherwise just 1 layer for all tasks with hard parameter sharing
         num_task_layers = len(self.task_names) if self.cross_stitch else 1
         cross_stitch_layers = []
         for layer_num in range(self.h_layers):
-            print(">>> %d layer_num" % layer_num, flush=True)
+            print(">>> %d layer_num" % layer_num)#, flush=True)
             input_dim = self.lang_dim + self.in_dim + self.c_in_dim * 2 if layer_num == 0 \
                 else self.h_dim
             task_layers = []
@@ -233,7 +233,7 @@ class SluiceNetwork(object):
             task_num_labels = len(self.task2tag2idx[task_name])
 
             # use a small MLP both for the task losses
-            print('Using an MLP for task losses.', flush=True)
+            print('Using an MLP for task losses.')#, flush=True)
             # if we concatenate, the FC layer has to have a larger input_dim
             input_dim = self.h_dim * 2 * self.h_layers\
                 if self.layer_connect == CONCAT else self.h_dim * 2
@@ -250,7 +250,7 @@ class SluiceNetwork(object):
                     LayerStitchLayer(self.model, self.h_layers, self.h_dim,
                                      self.layer_stitch_init_scheme))
 
-        print('#\nOutput layers: %d\n' % len(output_layers_dict), flush=True)
+        print('#\nOutput layers: %d\n' % len(output_layers_dict))#, flush=True)
 
         # initialize the char RNN
         char_rnn = RNNSequencePredictor(dynet.LSTMBuilder(1, self.c_in_dim, self.c_in_dim, self.model))
@@ -274,7 +274,7 @@ class SluiceNetwork(object):
         :param train_dir: the directory containing the training files
         :param dev_dir: the directory containing the development files
         """
-        print("Reading training data from %s..." % train_dir, flush=True)
+        print("Reading training data from %s..." % train_dir)#, flush=True)
         train_X, train_Y, _, _, word2id, char2id, task2t2i, lang2id, train_L = get_data(
             train_domain, self.task_names, data_dir=train_dir, train=True, verbose=True)
 
@@ -282,8 +282,8 @@ class SluiceNetwork(object):
         dev_X, dev_Y, org_X, org_Y, _, _, _, _, _ = get_data(
             train_domain, self.task_names, word2id, char2id, task2t2i,
             data_dir=dev_dir, train=False, verbose=True)
-        print('Length of training data:', len(train_X), flush=True)
-        print('Length of validation data:', len(dev_X), flush=True)
+        print('Length of training data:', len(train_X))#, flush=True)
+        print('Length of validation data:', len(dev_X))#, flush=True)
 
         # store mappings of words and tags to indices
         self.set_indices(word2id, char2id, task2t2i, lang2id)
@@ -291,7 +291,7 @@ class SluiceNetwork(object):
         num_chars = len(self.char2id)
         num_langs = len(self.lang2id)
 
-        print('Building the computation graph...', flush=True)
+        print('Building the computation graph...')#, flush=True)
         self.predictors, self.char_rnn, self.wembeds, self.cembeds, self.lembeds = \
             self.build_computation_graph(num_words, num_chars, num_langs)
 
@@ -313,9 +313,9 @@ class SluiceNetwork(object):
         for epoch in range(num_epochs):
             np.save(lemb_dir+'/epoch_{0}'.format(epoch), self.lembeds.as_array())
             print('saved lembeds')
-            print('', flush=True)
+            print('')#, flush=True)
             bar = Bar('Training epoch %d/%d...' % (epoch+1, num_epochs),
-                      max=len(train_data), flush=True)
+                      max=len(train_data))#, flush=True)
 
             # keep track of the # of updates, total loss, and total # of
             # predicted instances per task
@@ -359,12 +359,12 @@ class SluiceNetwork(object):
 
             print("\nEpoch %d. Total loss: %.3f. Total penalty: %.3f. Losses: "
                   % (epoch, total_loss / total_predicted,
-                     total_penalty / total_predicted), end='', flush=True)
+                     total_penalty / total_predicted), end='')#, flush=True)
             for task in task2total_loss.keys():
                 print('%s: %.3f. ' % (task, task2total_loss[task] /
                                       task2total_predicted[task]),
-                      end='', flush=True)
-            print('', flush=True)
+                      end='')#, flush=True)
+            print('')#, flush=True)
 
             # evaluate after every epoch
             dev_acc = self.evaluate(dev_X, dev_Y)
@@ -384,9 +384,9 @@ class SluiceNetwork(object):
                       flush=True)
                 num_epochs_no_improvement += 1
             if num_epochs_no_improvement == patience:
-                print('Early stopping...', flush=True)
+                print('Early stopping...')#, flush=True)
                 print('Loading the best performing model from %s...'
-                      % self.model_dir, flush=True)
+                      % self.model_dir)#, flush=True)
                 self.model.populate(self.model_file)
                 break
 
@@ -554,7 +554,7 @@ class SluiceNetwork(object):
                 alphas = dynet.parameter(
                     self.predictors['cross_stitch'][layer_num].alphas).value()
                 print('Cross-stitch unit values at layer %d.' % layer_num,
-                      end=' ', flush=True)
+                      end=' ')#, flush=True)
                 if self.num_subspaces > 1:
                     print(np.array(alphas).flatten())
                 else:
@@ -562,7 +562,7 @@ class SluiceNetwork(object):
                         for j, task_j in enumerate(self.task_names):
                             print('%s-%s: %3f.' % (task_i, task_j,
                                                    alphas[i][j]),
-                                  end=' ', flush=True)
+                                  end=' ')#, flush=True)
                 print('')
         if self.layer_connect == STITCH:
             for task_id, task_name in enumerate(self.task_names):
@@ -598,7 +598,7 @@ class SluiceNetwork(object):
             else:
                 print('Task: %s. Acc: %.4f. Correct: %d. Total: %d.'
                       % (task, stats['correct'] / stats['total'],
-                         stats['correct'], stats['total']), flush=True)
+                         stats['correct'], stats['total']))#, flush=True)
         if task2stats[self.main_task]['total'] == 0:
             print('No test examples available for main task %s. Continuing...'
                   % self.main_task)
