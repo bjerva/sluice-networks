@@ -561,8 +561,7 @@ class SluiceNetwork(object):
                 betas = dynet.parameter(
                     self.predictors['layer_stitch'][task_id].betas).value()
                 print('Layer-stitch unit values for task %s: %s.'
-                      % (task_name, ', '.join(['%.3f' % b for b in betas])),
-                      flush=True)
+                      % (task_name, ', '.join(['%.3f' % b for b in betas]))) #flush=True)
             print('Note: Without cross-stitching, we only use the first '
                   'layer-stitch units due to hard parameter-sharing.')
 
