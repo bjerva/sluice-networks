@@ -368,8 +368,7 @@ class SluiceNetwork(object):
 
             if dev_acc > best_dev_acc:
                 print('Main task %s dev acc %.4f is greater than best dev acc '
-                      '%.4f...' % (self.main_task, dev_acc, best_dev_acc),
-                      flush=True)
+                      '%.4f...' % (self.main_task, dev_acc, best_dev_acc))#flush=True)
                 best_dev_acc = dev_acc
                 num_epochs_no_improvement = 0
                 print('Saving model to directory %s...' % self.model_dir)#flush=True)
