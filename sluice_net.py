@@ -242,8 +242,7 @@ class SluiceNetwork(object):
             output_layers_dict[task_name] = sequence_predictor
 
             if self.layer_connect == STITCH:
-                print('Using layer-stitch units for task %s...' % task_name,
-                      flush=True)
+                print('Using layer-stitch units for task %s...' % task_name)#,  flush=True)
                 # w/o cross-stitching, we only use one LayerStitchLayer
                 layer_stitch_layers.append(
                     LayerStitchLayer(self.model, self.h_layers, self.h_dim,
@@ -379,8 +378,7 @@ class SluiceNetwork(object):
                 self.save()
             else:
                 print('Main task %s dev acc %.4f is lower than best dev acc '
-                      '%.4f...' % (self.main_task, dev_acc, best_dev_acc),
-                      flush=True)
+                      '%.4f...' % (self.main_task, dev_acc, best_dev_acc))# flush=True)
                 num_epochs_no_improvement += 1
             if num_epochs_no_improvement == patience:
                 print('Early stopping...')#, flush=True)
