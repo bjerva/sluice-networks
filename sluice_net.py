@@ -372,8 +372,7 @@ class SluiceNetwork(object):
                       flush=True)
                 best_dev_acc = dev_acc
                 num_epochs_no_improvement = 0
-                print('Saving model to directory %s...' % self.model_dir,
-                      flush=True)
+                print('Saving model to directory %s...' % self.model_dir)#flush=True)
                 self.save()
             else:
                 print('Main task %s dev acc %.4f is lower than best dev acc '
