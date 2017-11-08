@@ -309,10 +309,11 @@ class SluiceNetwork(object):
         print('Training model with %s for %d epochs and patience of %d.'
               % (optimizer, num_epochs, patience))
         for epoch in range(num_epochs):
-            np.save(lemb_dir+'/epoch_{0}'.format(epoch), self.lembeds.as_array())
+            np.save(lemb_dir+'epoch_{0}'.format(epoch), self.lembeds.as_array())
             print('saved lembeds')
             print('')#, flush=True)
-            bar = Bar('Training epoch %d/%d...' % (epoch+1, num_epochs),
+            if __debug__:
+                bar = Bar('Training epoch %d/%d...' % (epoch+1, num_epochs),
                       max=len(train_data))#, flush=True)
 
             # keep track of the # of updates, total loss, and total # of
