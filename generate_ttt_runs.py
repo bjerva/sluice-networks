@@ -24,7 +24,7 @@ base_slurm = '''#!/bin/bash
 # parser.add_argument('--n-runs', type=int, default=5)
 # args = parser.parse_args()
 
-base_python = '''python -u -O run_sluice_net.py --dynet-autobatch 1 --dynet-seed 123 --task-names pos --h-layers 1 --pred-layer 1  --patience 3 --train-dir ~/data/ --dev-dir ~/data/ --test-dir ~/data/ --train {0} --test {1} --constrain-matrices 0 --in-dim 1 --model-dir ./models/{3}_{1}_$SLURM_ARRAY_TASK_ID --log-dir ./logs/ --lemb-dir 081117/{3}_{1}_$SLURM_ARRAY_TASK_ID_'''
+base_python = '''python -u -O run_sluice_net.py --dynet-autobatch 1 --task-names pos --h-layers 1 --pred-layer 1  --patience 3 --train-dir ~/data/ --dev-dir ~/data/ --test-dir ~/data/ --train {0} --test {1} --constrain-matrices 0 --in-dim 1 --model-dir ./models/{3}_{1}_$SLURM_ARRAY_TASK_ID --log-dir ./logs/ --lemb-dir 081117/{3}_{1}_$SLURM_ARRAY_TASK_ID_'''
 log_dir = ' > ~/ttt_logs/$SLURM_ARRAY_TASK_ID/{0}_{1}.txt'
 
 languages = 'UD_Finnish UD_Estonian UD_Hungarian UD_NorthSami'.split()
