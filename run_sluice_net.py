@@ -30,19 +30,19 @@ def check_activation_function(arg):
 
 def main(args):
     if args.dynet_seed:
-        print('>>> using seed: ', args.dynet_seed, file=sys.stderr, flush=True)
+        print('>>> using seed: ', args.dynet_seed)#)#, file=sys.stderr, flush=True)
         np.random.seed(args.dynet_seed)
         random.seed(args.dynet_seed)
 
     if args.c_in_dim == 0:
-        print('no character embeddings', file=sys.stderr, flush=True)
+        print('no character embeddings')#, file=sys.stderr, flush=True)
 
     # check if folder exists
     if not os.path.exists(args.model_dir):
         print('Creating model directory %s...' % args.model_dir, flush=True)
         os.makedirs(args.model_dir)
     print('Note: Use different model-dir paths for different runs. Otherwise '
-          'files might be overwritten.', file=sys.stderr, flush=True)
+          'files might be overwritten.')#, file=sys.stderr, flush=True)
     if not os.path.exists(args.log_dir):
         print('Creating log directory %s...' % args.log_dir, flush=True)
         os.makedirs(args.log_dir)
@@ -52,7 +52,7 @@ def main(args):
 
     if len(args.test) < 2:
         print('No or only one test domain is being used. Model can be '
-              'evaluated on all available domains.', file=sys.stderr, flush=True)
+              'evaluated on all available domains.')#, file=sys.stderr, flush=True)
 
     assert args.num_subspaces > 1 or args.constraint_weight == 0,\
         'Error: More than 1 subspace necessary for subspace constraint.'
