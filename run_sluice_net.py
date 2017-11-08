@@ -30,21 +30,21 @@ def check_activation_function(arg):
 
 def main(args):
     if args.dynet_seed:
-        print('>>> using seed: ', args.dynet_seed)#)#, file=sys.stderr, flush=True)
+        print('>>> using seed: ', args.dynet_seed)#)#, file=sys.stderr)#, flush=True)
         np.random.seed(args.dynet_seed)
         random.seed(args.dynet_seed)
 
     if args.c_in_dim == 0:
-        print('no character embeddings')#, file=sys.stderr, flush=True)
+        print('no character embeddings')#, file=sys.stderr)#, flush=True)
 
     # check if folder exists
     if not os.path.exists(args.model_dir):
-        print('Creating model directory %s...' % args.model_dir, flush=True)
+        print('Creating model directory %s...' % args.model_dir)#, flush=True)
         os.makedirs(args.model_dir)
     print('Note: Use different model-dir paths for different runs. Otherwise '
-          'files might be overwritten.')#, file=sys.stderr, flush=True)
+          'files might be overwritten.')#, file=sys.stderr)#, flush=True)
     if not os.path.exists(args.log_dir):
-        print('Creating log directory %s...' % args.log_dir, flush=True)
+        print('Creating log directory %s...' % args.log_dir)#, flush=True)
         os.makedirs(args.log_dir)
 
     for dir_path in [args.train_dir, args.dev_dir, args.test_dir]:
@@ -52,7 +52,7 @@ def main(args):
 
     if len(args.test) < 2:
         print('No or only one test domain is being used. Model can be '
-              'evaluated on all available domains.')#, file=sys.stderr, flush=True)
+              'evaluated on all available domains.')#, file=sys.stderr)#, flush=True)
 
     assert args.num_subspaces > 1 or args.constraint_weight == 0,\
         'Error: More than 1 subspace necessary for subspace constraint.'
@@ -77,14 +77,14 @@ def main(args):
         ('Error: %d task names provided but %d ids for pred layers given.' %
          (len(args.task_names), len(args.pred_layer)))
 
-    print('Using %s layer connections before FC layer...', flush=True)
+    print('Using %s layer connections before FC layer...')#, flush=True)
     if args.constraint_weight != 0:
         print('Using subspace constraint with constraint weight %.4f...'
               % args.constraint_weight)
         print('Using squared Frobenius norm constraint on LSTM matrices with '
               'ids %s...' %
               ', '.join(['%d' % d for d in args.constrain_matrices]))
-    print('Tasks used: %s' % ', '.join(args.task_names), flush=True)
+    print('Tasks used: %s' % ', '.join(args.task_names))#, flush=True)
 
     if args.load:
         assert os.path.exists(args.model_dir),\
@@ -125,9 +125,9 @@ def main(args):
             model.task2tag2idx, data_dir=args.test_dir, train=False, test=True)
 
         test_accuracy = model.evaluate(test_X, test_Y)
-        print('Train: %s. Test: %s.' % (args.train, test_domain), flush=True)
+        print('Train: %s. Test: %s.' % (args.train, test_domain))#, flush=True)
         print('Main task: %s. Test accuracy: %.4f'
-              % (model.main_task, test_accuracy), flush=True)
+              % (model.main_task, test_accuracy))#, flush=True)
 
         log_file = os.path.join(args.log_dir, 'log.txt')
         utils.log_score(log_file, args.train, test_domain, test_accuracy,
