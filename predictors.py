@@ -12,7 +12,7 @@ class SequencePredictor:
     def __init__(self, builder):
         """Initializes the model. Expects a LSTMBuilder or SimpleRNNBuilder."""
         self.builder = builder
-    
+
     def predict_sequence(self, inputs):
         """Predicts the output of a sequence."""
         return [self.builder(x) for x in inputs]
@@ -48,7 +48,7 @@ class CrossStitchLayer:
         :param num_subspaces: the number of subspaces
         :param init_scheme: the initialization scheme; balanced or imbalanced
         """
-        print('Using %d subspaces...' % num_subspaces, flush=True)
+        print('Using %d subspaces...' % num_subspaces)#, flush=True)
         alpha_params = np.full((num_tasks * num_subspaces,
                                 num_tasks * num_subspaces),
                                1. / (num_tasks * num_subspaces))
@@ -76,8 +76,8 @@ class CrossStitchLayer:
         self.alphas = model.add_parameters(
             (num_tasks*num_subspaces, num_tasks*num_subspaces),
             init=dynet.NumpyInitializer(alpha_params))
-        print('Initializing cross-stitch units to:', flush=True)
-        print(dynet.parameter(self.alphas).value(), flush=True)
+        print('Initializing cross-stitch units to:')#, flush=True)
+        print(dynet.parameter(self.alphas).value())#, flush=True)
         self.num_tasks = num_tasks
         self.num_subspaces = num_subspaces
         self.hidden_dim = hidden_dim
@@ -141,8 +141,8 @@ class LayerStitchLayer:
                              'units: %s.' % init_scheme)
         self.betas = model.add_parameters(
             num_layers, init=dynet.NumpyInitializer(beta_params))
-        print('Initializing layer-stitch units to:', flush=True)
-        print(dynet.parameter(self.betas).value(), flush=True)
+        print('Initializing layer-stitch units to:')#, flush=True)
+        print(dynet.parameter(self.betas).value())#, flush=True)
         self.num_layers = num_layers
         self.hidden_dim = hidden_dim
 
@@ -197,7 +197,7 @@ class Layer:
             mlp_dim = in_dim
         self.W_out = model.add_parameters((output_dim, mlp_dim))
         self.b_out = model.add_parameters((output_dim))
-        
+
     def __call__(self, x):
         if self.mlp:
             W_mlp = dynet.parameter(self.W_mlp)
