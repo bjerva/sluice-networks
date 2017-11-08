@@ -25,7 +25,7 @@ base_slurm = '''#!/bin/bash
 # args = parser.parse_args()
 
 base_python = '''python -u -O run_sluice_net.py --dynet-autobatch 1 --dynet-seed 123 --task-names pos --h-layers 1 --pred-layer 1  --patience 3 --train-dir ~/data/ --dev-dir ~/data/ --test-dir ~/data/ --train {0} --test {1} --constrain-matrices 0 --in-dim 1 --lemb-dir 081117/{0}_{1}_'''
-log_dir = ' > ~/ttt_logs/$SLURM_ARRAY_TASK_ID/{0}_{1}.txt
+log_dir = ' > ~/ttt_logs/$SLURM_ARRAY_TASK_ID/{0}_{1}.txt'
 
 languages = 'UD_Finnish UD_Estonian UD_Hungarian UD_NorthSami'.split()
 
@@ -35,4 +35,3 @@ for l1 in languages:
             out_f.write(base_slurm.format(l1+'_'+l2))
             out_f.write(base_python.format(l1, l2))
             out_f.write(log_dir.format(l1, l2))
-            
