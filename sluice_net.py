@@ -219,8 +219,7 @@ class SluiceNetwork(object):
                 task_layers.append(BiRNNSequencePredictor(builder))
             layers.append(task_layers)
             if self.cross_stitch:
-                print('Using cross-stitch units after layer %d...' % layer_num,
-                      flush=True)
+                print('Using cross-stitch units after layer %d...' % layer_num#),flush=True)
                 cross_stitch_layers.append(
                     CrossStitchLayer(self.model, len(self.task_names),
                                      self.h_dim, self.num_subspaces,
