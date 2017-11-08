@@ -4,6 +4,8 @@ Utility methods for data processing.
 import os
 from glob import glob
 import itertools
+import pickle
+import numpy as np
 
 from constants import NUM, NUMBERREGEX, POS, NER, SRL, CHUNK, UNK, WORD_START,\
     WORD_END
@@ -55,6 +57,24 @@ def load_embeddings_file(file_name, sep=" ", lower=False):
           .format(len(word2vec.keys()), lower))
     return word2vec, len(word2vec[word])
 
+def load_language_embeddings():
+    """Loads a word embedding file."""
+
+    with open('./lvec_ids.pkl', 'rb') as in_f:
+        lang2id = pickle.load(in_f)
+
+    p1 = np.load('./lvec_p1.npy')
+    p2 = np.load('./lvec_p2.npy')
+    p3 = np.load('./lvec_p3.npy')
+    stacked =  np.hstack([p1,p2,p3])
+
+    # lang2vec = {}
+    # for idx, lang in enumerate(lang2id):
+    #     lang2vec[lang] = stacked[idx]
+
+    print('Loaded pre-trained language embeddings')
+    return lang2id, p1#stacked
+
 
 def read_conll_file(file_path, tasks=None, verbose=False):
     """
@@ -90,8 +110,14 @@ def read_conll_file(file_path, tasks=None, verbose=False):
                 #lemma,\
                     #frameset_id, word_sense, speaker, ner_tag,
                 word_id, word_form, lemma, postag, ner_tag, \
-                    *rest = line.strip().split()
+                    *rest = line.strip().split('\t')
                 srl_tags, srl_bio_tag = [], None
+                #
+                # try:
+                #     int(postag)
+                #     import ipdb; ipdb.set_trace()
+                # except:
+                #     pass
 
                 # we only use the verb identification tags (not the ARG tags)
                 # for SRL
@@ -108,6 +134,11 @@ def read_conll_file(file_path, tasks=None, verbose=False):
                     srl_bio_tag = None
                 ner_bio_tag, prev_ner_tag_type, ner_within_tag = tag2BIO_tag(
                     ner_tag, prev_ner_tag_type, ner_within_tag)
+
+                try:
+                    float(word_id)
+                except ValueError:
+                    word_id = word_id.split('-')[0]
                 conll_entries.append(
                     ConllEntry(float(word_id), word_form, tasks, pos=postag,
                                ner_tag=ner_bio_tag, srl_tag=srl_bio_tag))
@@ -162,7 +193,7 @@ def read_file(file_path, tasks, verbose=False):
 
 
 def get_data(domains, task_names, word2id=None, char2id=None,
-             task2label2id=None, data_dir=None, train=True, verbose=False):
+             task2label2id=None, data_dir=None, train=True, test=False, verbose=False):
     """
     :param domains: a list of domains from which to obtain the data
     :param task_names: a list of task names
@@ -187,7 +218,11 @@ def get_data(domains, task_names, word2id=None, char2id=None,
     org_Y = []
     L = []
 
-    lang2id = {}
+    # lang2id = {}
+    with open('./lvec_ids.pkl', 'rb') as in_f:
+        lang2id = pickle.load(in_f)
+
+    lang2id = {lang: lang_id for lang_id, lang in enumerate(lang2id)}
 
     # for training, we initialize all mappings; for testing, we require mappings
     if train:
@@ -220,7 +255,37 @@ def get_data(domains, task_names, word2id=None, char2id=None,
         assert WORD_END in char2id
 
     for domain in domains:
-        lang2id[domain] = len(lang2id)
+        #FIXME: Hard coding will do for now...
+        if domain == 'UD_English':
+            lang_code = 'eng-latn'
+        elif domain == 'UD_Finnish':
+            lang_code = 'fin-latn'
+        elif domain == 'UD_Estonian':
+            lang_code = 'est-latn'
+        elif domain == 'UD_Hungarian':
+            lang_code = 'hun-latn'
+        elif domain == 'UD_NorthSami':
+            lang_code = 'sme-latn'
+        elif domain == 'UD_German':
+            lang_code = 'deu-latn'
+        elif domain == 'UD_Norwegian-Bokmaal':
+            lang_code = 'nob-latn'
+        elif domain == 'UD_Swedish':
+            lang_code = 'swe-latn'
+        elif domain == 'UD_Danish':
+            lang_code = 'dan-latn'
+        elif domain == 'UD_Spanish':
+            lang_code = 'spa-latn'
+        elif domain == 'UD_Italian':
+            lang_code = 'ita-latn'
+        elif domain == 'UD_Portuguese':
+            lang_code = 'por-latn'
+        elif domain == 'UD_Catalan':
+            lang_code = 'cat-latn'
+        else:
+            print('ERROR, NO DOMAIN LANG EMB')
+
+        #lang2id[domain] = len(lang2id)
         num_sentences = 0
         num_tokens = 0
 
@@ -231,10 +296,16 @@ def get_data(domains, task_names, word2id=None, char2id=None,
         assert os.path.exists(domain_path), ('Domain path %s does not exist.'
                                              % domain_path)
         # read files in the domain path and add the file reader to the generator
+        if train:
+            suffix = '*train.conllu'
+        elif test:
+            suffix = '*test.conllu'
+        else:
+            suffix = '*dev.conllu'
         if POS in task_names or SRL in task_names or NER in task_names:
             # POS tagging, SRL, and NER use the same files
             for file_path in itertools.chain.from_iterable(
-                    glob(os.path.join(x[0], '*.conllu'))# '*.gold_conll'))
+                    glob(os.path.join(x[0], suffix))# '*.gold_conll'))
                     for x in os.walk(domain_path)):
                 file_reader = itertools.chain(
                     file_reader, read_conll_file(file_path, verbose=verbose))
@@ -249,6 +320,7 @@ def get_data(domains, task_names, word2id=None, char2id=None,
         # the file reader should returns a list of CoNLL entries; we then get
         # the relevant labels for each task
         for sentence_idx, conll_entries in enumerate(file_reader):
+            if num_sentences >= 1500: break
             num_sentences += 1
             sentence_word_indices = []  # sequence of word indices
             sentence_char_indices = []  # sequence of char indices
@@ -256,7 +328,7 @@ def get_data(domains, task_names, word2id=None, char2id=None,
             sentence_task2label_indices = {}
             sentence_task2labels = {}
 
-            sentence_language = lang2id[domain]
+            sentence_language = lang2id[lang_code]
 
             # keep track of the original word forms
             org_X.append([conll_entry.norm for conll_entry in conll_entries])

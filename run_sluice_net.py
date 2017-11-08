@@ -116,13 +116,13 @@ def main(args):
                               layer_stitch_init_scheme=
                               args.layer_stitch_init_scheme)
         model.fit(args.train, args.epochs, args.patience, args.opt,
-                  train_dir=args.train_dir, dev_dir=args.dev_dir)
+                  train_dir=args.train_dir, dev_dir=args.dev_dir, lemb_dir=args.lemb_dir)
 
     for i, test_domain in enumerate(args.test):
         print('\nTesting on domain %s...' % test_domain)
-        test_X, test_Y, _, _, _, _, _ = utils.get_data(
+        test_X, test_Y, _, _, _, _, _, _, _ = utils.get_data(
             [test_domain], model.task_names, model.word2id, model.char2id,
-            model.task2tag2idx, data_dir=args.test_dir, train=False)
+            model.task2tag2idx, data_dir=args.test_dir, train=False, test=True)
 
         test_accuracy = model.evaluate(test_X, test_Y)
         print('Train: %s. Test: %s.' % (args.train, test_domain), flush=True)
@@ -167,6 +167,8 @@ if __name__ == '__main__':
                         help='directory where to save model and param files')
     parser.add_argument('--log-dir', required=True,
                         help='the directory where the results should be logged')
+    parser.add_argument('--lemb-dir', required=True,
+                        help='the directory where the language embeddings should be logged')
 
     # model-specific hyperparameters
     parser.add_argument('--pred-layer', nargs='+', type=int, default=[1],

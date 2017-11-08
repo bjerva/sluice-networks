@@ -12,7 +12,7 @@ from progress.bar import Bar
 
 from predictors import SequencePredictor, Layer, RNNSequencePredictor, \
     BiRNNSequencePredictor, CrossStitchLayer, LayerStitchLayer
-from utils import load_embeddings_file, get_data
+from utils import load_embeddings_file, get_data, load_language_embeddings
 from constants import POS, CHUNK, NER, SRL, MODEL_FILE, PARAMS_FILE, \
     IMBALANCED, BALANCED, STITCH, CONCAT, SKIP, NONE, SGD, ADAM
 
@@ -122,7 +122,7 @@ class SluiceNetwork(object):
         # Language embedding specific
         self.lang2id = {}
         self.lembeds = None
-        self.lang_dim = 32
+        self.lang_dim = 64
 
     def save(self):
         """Save model. DyNet only saves parameters. Save rest separately."""
@@ -183,7 +183,12 @@ class SluiceNetwork(object):
             wembeds = self.model.add_lookup_parameters((num_words, self.in_dim))
             cembeds = self.model.add_lookup_parameters((num_chars, self.c_in_dim))
 
+
+        lang2id, pretrained_lembeds = load_language_embeddings()
+        num_langs = len(lang2id)
         lembeds = self.model.add_lookup_parameters((num_langs, self.lang_dim))
+        for lang_id, lang in enumerate(lang2id):
+            lembeds.init_row(lang_id, pretrained_lembeds[lang_id])
 
         layers = []  # inner layers
         output_layers_dict = {}  # from task_name to actual softmax predictor
@@ -259,7 +264,7 @@ class SluiceNetwork(object):
         return predictors, char_rnn, wembeds, cembeds, lembeds
 
     def fit(self, train_domain, num_epochs, patience, optimizer, train_dir,
-            dev_dir):
+            dev_dir, lemb_dir='.'):
         """
         Trains the model.
         :param train_domain: the domain used for training
@@ -306,7 +311,8 @@ class SluiceNetwork(object):
         print('Training model with %s for %d epochs and patience of %d.'
               % (optimizer, num_epochs, patience))
         for epoch in range(num_epochs):
-            import pdb; pdb.set_trace()
+            np.save(lemb_dir+'/epoch_{0}'.format(epoch), self.lembeds.as_array())
+            print('saved lembeds')
             print('', flush=True)
             bar = Bar('Training epoch %d/%d...' % (epoch+1, num_epochs),
                       max=len(train_data), flush=True)
@@ -381,7 +387,7 @@ class SluiceNetwork(object):
                 print('Early stopping...', flush=True)
                 print('Loading the best performing model from %s...'
                       % self.model_dir, flush=True)
-                self.model.load(self.model_file)
+                self.model.populate(self.model_file)
                 break
 
     def predict(self, features, task_name, train=False):
@@ -573,8 +579,10 @@ class SluiceNetwork(object):
         for i, ((word_indices, word_char_indices), task2label_id_seq)\
                 in enumerate(zip(test_X, test_Y)):
             for task, label_id_seq in task2label_id_seq.items():
+                langid = 0 # FIXME: This will give wrong eval cause of lang id
                 features = self.get_word_char_features(word_indices,
-                                                       word_char_indices)
+                                                       word_char_indices,
+                                                       langid)
                 output, _ = self.predict(features, task, train=False)
                 predicted_label_indices = [np.argmax(o.value()) for o in output]
                 task2stats[task]['correct'] += sum(

@@ -19,7 +19,9 @@ TASK_NAMES = [POS, CHUNK, SRL, NER]
 
 # domains
 #DOMAINS = ['bc', 'bn', 'mz', 'nw', 'wb', 'tc', 'pt']
-DOMAINS = ['UD_English', 'UD_German', 'UD_Finnish']
+#DOMAINS = ['UD_English', 'UD_German', 'UD_Finnish', 'UD_Estonian', 'UD_Norwegian-Bokmaal', 'UD_Swedish', 'UD_Danish']
+
+DOMAINS = 'UD_Finnish UD_Estonian UD_Hungarian UD_NorthSami UD_English UD_Norwegian-Bokmaal UD_Swedish UD_Danish UD_Spanish UD_Italian UD_Portuguese UD_Catalan'.split()
 
 # model files
 MODEL_FILE = 'sluice_net.model'
