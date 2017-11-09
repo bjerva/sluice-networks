@@ -7,6 +7,7 @@ import itertools
 import pickle
 import numpy as np
 
+from codecs import open
 from constants import NUM, NUMBERREGEX, POS, NER, SRL, CHUNK, UNK, WORD_START,\
     WORD_END
 
@@ -109,8 +110,7 @@ def read_conll_file(file_path, tasks=None, verbose=False):
                 #doc_id, part_num,
                 #lemma,\
                     #frameset_id, word_sense, speaker, ner_tag,
-                word_id, word_form, lemma, postag, ner_tag, \
-                    *rest = line.strip().split('\t')
+                word_id, word_form, lemma, postag, ner_tag, rest = line.strip().split('\t')[:6]
                 srl_tags, srl_bio_tag = [], None
                 #
                 # try:
