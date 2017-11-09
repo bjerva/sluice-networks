@@ -53,7 +53,8 @@ class SluiceNetwork(object):
                  noise_sigma=0.1, task_names=[], cross_stitch=False,
                  layer_connect=NONE, num_subspaces=1, constraint_weight=0,
                  constrain_matrices=[1, 2], cross_stitch_init_scheme=IMBALANCED,
-                 layer_stitch_init_scheme=BALANCED):
+                 layer_stitch_init_scheme=BALANCED,
+                 lemb_dir=None):
         """
         :param in_dim: The dimension of the word embeddings.
         :param h_dim: The hidden dimension of the model.
@@ -123,7 +124,11 @@ class SluiceNetwork(object):
         # Language embedding specific
         self.lang2id = {}
         self.lembeds = None
-        self.lang_dim = 64
+        self.lemb_dir = lemb_dir
+        if self.lemb_dir:
+            self.lang_dim = 64
+        else:
+            self.lang_dim = 0
 
     def save(self):
         """Save model. DyNet only saves parameters. Save rest separately."""
@@ -185,11 +190,14 @@ class SluiceNetwork(object):
             cembeds = self.model.add_lookup_parameters((num_chars, self.c_in_dim))
 
 
-        lang2id, pretrained_lembeds = load_language_embeddings()
-        num_langs = len(lang2id)
-        lembeds = self.model.add_lookup_parameters((num_langs, self.lang_dim))
-        for lang_id, lang in enumerate(lang2id):
-            lembeds.init_row(lang_id, pretrained_lembeds[lang_id])
+        if self.lemb_dir:
+            lang2id, pretrained_lembeds = load_language_embeddings()
+            num_langs = len(lang2id)
+            lembeds = self.model.add_lookup_parameters((num_langs, self.lang_dim))
+            for lang_id, lang in enumerate(lang2id):
+                lembeds.init_row(lang_id, pretrained_lembeds[lang_id])
+        else:
+            lembeds = None
 
         layers = []  # inner layers
         output_layers_dict = {}  # from task_name to actual softmax predictor
@@ -310,8 +318,9 @@ class SluiceNetwork(object):
         print('Training model with %s for %d epochs and patience of %d.'
               % (optimizer, num_epochs, patience))
         for epoch in range(num_epochs):
-            np.save(lemb_dir+'epoch_{0}'.format(epoch), self.lembeds.as_array())
-            print('saved lembeds')
+            if self.lemb_dir:
+                np.save(lemb_dir+'epoch_{0}'.format(epoch), self.lembeds.as_array())
+                print('saved lembeds')
             print('')#, flush=True)
             if __debug__:
                 bar = Bar('Training epoch %d/%d...' % (epoch+1, num_epochs),
@@ -623,10 +632,19 @@ class SluiceNetwork(object):
             char_emb.append(last_state)
             rev_char_emb.append(rev_last_state)
 
-        lfeatures = [self.lembeds[lang_id] for _ in word_indices]
+        if self.lemb_dir:
+            lfeatures = [self.lembeds[lang_id] for _ in word_indices]
+        else:
+            lfeatures = None
         wfeatures = [self.wembeds[w] for w in word_indices]
-        features = [dynet.concatenate([w, c, rev_c, l]) for w, c, rev_c, l in
-                    zip(wfeatures, char_emb, reversed(rev_char_emb), lfeatures)]
+
+        if self.lemb_dir:
+            features = [dynet.concatenate([w, c, rev_c, l]) for w, c, rev_c, l in
+                        zip(wfeatures, char_emb, reversed(rev_char_emb), lfeatures)]
+        else:
+            features = [dynet.concatenate([w, c, rev_c]) for w, c, rev_c,  in
+                        zip(wfeatures, char_emb, reversed(rev_char_emb))]
+
         return features
 
 
