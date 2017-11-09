@@ -114,7 +114,8 @@ def main(args):
                               cross_stitch_init_scheme=
                               args.cross_stitch_init_scheme,
                               layer_stitch_init_scheme=
-                              args.layer_stitch_init_scheme)
+                              args.layer_stitch_init_scheme,
+                              lemb_dir=args.lemb_dir)
         model.fit(args.train, args.epochs, args.patience, args.opt,
                   train_dir=args.train_dir, dev_dir=args.dev_dir, lemb_dir=args.lemb_dir)
 
@@ -167,7 +168,7 @@ if __name__ == '__main__':
                         help='directory where to save model and param files')
     parser.add_argument('--log-dir', required=True,
                         help='the directory where the results should be logged')
-    parser.add_argument('--lemb-dir', required=True,
+    parser.add_argument('--lemb-dir', default=None,
                         help='the directory where the language embeddings should be logged')
 
     # model-specific hyperparameters
