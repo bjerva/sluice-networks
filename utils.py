@@ -283,7 +283,13 @@ def get_data(domains, task_names, word2id=None, char2id=None,
         elif domain == 'UD_Catalan':
             lang_code = 'cat-latn'
         else:
-            print('ERROR, NO DOMAIN LANG EMB')
+            import pycountry
+            language = domain.split('_')[1]
+            try:
+                lang_code = pycountry.languages.get(name=language).alpha_3 + '-latn'
+                print(lang_code)
+            except:
+                print('ERROR', domain, language)
 
         #lang2id[domain] = len(lang2id)
         num_sentences = 0
